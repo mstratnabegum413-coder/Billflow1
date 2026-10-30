@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'">
+<title>BillFlow - Invoice Studio</title>
+<meta name="description" content="Create, track and print clean invoices. Works offline. No account, no server.">
+<meta name="theme-color" content="#2748e8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#"><span class="mark" aria-hidden="true">B</span>BillFlow</a>
+  <nav><a class="link" href="#profile">Profile</a><a class="btn primary" href="#new">New invoice</a></nav>
+</header>
+<main id="app" aria-live="polite"></main>
+<div id="toast" role="status"></div>
+<noscript><p style="padding:24px">BillFlow needs JavaScript to run.</p></noscript>
+<script src="app.js"></script>
+</body>
+</html>

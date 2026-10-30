@@ -1,0 +1,1 @@
+{"name":"billflow-invoice-studio","version":"1.0.0","description":"Offline-first invoice and quote studio. No backend, no dependencies.","private":true,"scripts":{"start":"python3 -m http.server 8080","check":"node --check app.js && node --check sw.js"},"license":"SEE LICENSE IN README.md"}

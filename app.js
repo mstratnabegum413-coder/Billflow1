@@ -1,6 +1,5 @@
 (() => {
 'use strict';
-const K = 'billflow.v1';
 const CUR = ['USD', 'EUR', 'GBP', 'BDT', 'INR', 'AED', 'CAD', 'AUD'];
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -8,19 +7,15 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const today = () => new Date().toISOString().slice(0, 10);
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
 const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36);
-const fresh = () => ({ profile: { name: '', email: '', address: '', currency: 'USD', tax: 0, prefix: 'INV-' }, invoices: [] });
+const { fresh, load, save: persist } = BillFlowStorage;
 const app = $('#app');
 
-function load() {
-  try { const v = JSON.parse(localStorage.getItem(K)); if (v && Array.isArray(v.invoices)) return v; } catch (e) { /* first run */ }
-  return fresh();
-}
 let db = load();
-function save() { try { localStorage.setItem(K, JSON.stringify(db)); } catch (e) { toast('Could not save. Browser storage is blocked or full.'); } }
+function save() { if (!persist(db)) toast('Could not save. Browser storage is blocked or full.'); }
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2400); }
 const money = (n, c) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: c || db.profile.currency }).format(n); } catch (e) { return (c || '') + ' ' + Number(n).toFixed(2); } };
-const calc = i => { const sub = i.items.reduce((s, x) => s + x.q * x.p, 0); const disc = Math.min(i.discount || 0, sub); const tax = (sub - disc) * (i.tax || 0) / 100; return { sub, disc, tax, total: sub - disc + tax }; };
-const status = i => i.status === 'paid' ? 'paid' : (i.due < today() ? 'overdue' : i.status);
+const calc = BillFlowCalc.calc;
+const status = i => BillFlowCalc.status(i, today());
 const nextNo = () => { const n = db.invoices.reduce((m, i) => Math.max(m, parseInt(String(i.no).replace(/\D/g, ''), 10) || 0), 0) + 1; return db.profile.prefix + String(n).padStart(4, '0'); };
 const opts = cur => CUR.map(c => `<option${c === cur ? ' selected' : ''}>${c}</option>`).join('');
 
@@ -40,8 +35,9 @@ function home() {
     const q = $('#q').value.toLowerCase(), f = $('#st').value;
     const L = db.invoices.filter(i => (!f || status(i) === f) && (i.client.name + i.no).toLowerCase().includes(q));
     $('#list').innerHTML = L.length ? L.map(i => `<a class="row" href="#edit-${esc(i.id)}"><div><strong>${esc(i.client.name || 'No client name')}</strong><small>${esc(i.no)}, due ${esc(i.due)}</small></div><div class="r"><b>${money(calc(i).total, i.cur)}</b><em class="tag ${status(i)}">${status(i)}</em></div></a>`).join('')
-      : `<div class="card empty"><h2>${db.invoices.length ? 'No matches' : 'No invoices yet'}</h2><p class="mut">${db.invoices.length ? 'Try a different search or filter.' : 'Create your first invoice in under a minute.'}</p>${db.invoices.length ? '' : '<a class="btn primary" href="#new">Create invoice</a>'}</div>`;
+      : `<div class="card empty"><h2>${db.invoices.length ? 'No matches' : 'No invoices yet'}</h2><p class="mut">${db.invoices.length ? 'Try a different search or filter.' : 'Create your first invoice in under a minute.'}</p>${db.invoices.length ? '' : '<a class="btn primary" href="#new">Create invoice</a> <button id="demo" type="button">Load sample data</button>'}</div>`;
   };
+  app.onclick = e => { if (e.target.id === 'demo') loadSample(); };
   $('#q').oninput = paint; $('#st').onchange = paint; paint();
 }
 
@@ -113,21 +109,24 @@ function profile() {
     db.profile = { name: d.get('name'), email: d.get('email'), address: d.get('address'), currency: d.get('currency'), tax: parseFloat(d.get('tax')) || 0, prefix: d.get('prefix') };
     save(); toast('Profile saved');
   };
-  $('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' })); a.download = 'billflow-backup-' + today() + '.json'; a.click(); URL.revokeObjectURL(a.href); };
+  $('#exp').onclick = () => BillFlowBackup.download(db, 'billflow-backup-' + today() + '.json');
   $('#imp').onchange = e => {
     const file = e.target.files[0]; if (!file) return;
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const v = JSON.parse(r.result);
-        if (!v || !Array.isArray(v.invoices) || !v.invoices.every(i => i && Array.isArray(i.items) && i.client)) throw new Error('shape');
-        v.invoices.forEach(i => { i.items = i.items.map(x => ({ d: String(x.d ?? ''), q: +x.q || 0, p: +x.p || 0 })); });
-        db = { profile: { ...fresh().profile, ...v.profile }, invoices: v.invoices }; save(); toast('Backup imported'); route();
-      } catch (x) { toast('That file is not a BillFlow backup'); }
-    };
-    r.readAsText(file);
+    BillFlowBackup.read(file).then(v => { db = { profile: { ...fresh().profile, ...v.profile }, invoices: v.invoices }; save(); toast('Backup imported'); route(); }).catch(() => toast('That file is not a BillFlow backup'));
   };
   $('#rst').onclick = () => { if (confirm('Erase all invoices and settings from this browser?')) { db = fresh(); save(); toast('All data erased'); location.hash = ''; } };
+}
+
+function loadSample() {
+  const d = today();
+  const mk = (no, name, st, due, items) => ({ id: uid(), no, cur: 'USD', client: { name, email: '', address: '' }, issued: d, due, items, tax: 5, discount: 0, notes: 'Thank you for your business.', status: st });
+  db.profile = { ...db.profile, name: 'Sample Studio', email: 'hello@example.com', address: '12 Example Street' };
+  db.invoices = [
+    mk('INV-0003', 'Sample Client C', 'draft', addDays(d, 14), [{ d: 'Logo design', q: 1, p: 350 }]),
+    mk('INV-0002', 'Sample Client B', 'sent', addDays(d, 7), [{ d: 'Website pages', q: 4, p: 120 }, { d: 'Hosting setup', q: 1, p: 60 }]),
+    mk('INV-0001', 'Sample Client A', 'paid', addDays(d, -20), [{ d: 'Monthly retainer', q: 1, p: 900 }])
+  ];
+  save(); toast('Sample data loaded'); route();
 }
 
 function route() {
@@ -137,5 +136,5 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 route();
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('service-worker.js').catch(() => {});
 })();

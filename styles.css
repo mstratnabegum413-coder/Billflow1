@@ -57,3 +57,6 @@ label{display:grid;gap:4px;font-size:.9rem;color:var(--mut);margin-bottom:10px}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 @media(prefers-reduced-motion:reduce){#toast{transition:none}}
 @media print{body{background:#fff}.top,#toast,.card,.bar,.stats{display:none!important}main{padding:0;max-width:none}.sheet{border:0;padding:0}}
+.auto{width:auto}
+.mt{margin-top:14px}
+.nm{margin:0}

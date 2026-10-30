@@ -29,7 +29,7 @@ function home() {
     <div class="stat"><span>Outstanding</span><b>${money(sum(s => s === 'sent' || s === 'draft'), c)}</b></div>
     <div class="stat warn"><span>Overdue</span><b>${money(sum(s => s === 'overdue'), c)}</b></div></section>
     <div class="bar"><input id="q" type="search" placeholder="Search client or number" aria-label="Search invoices">
-    <select id="st" aria-label="Filter by status" style="width:auto"><option value="">All</option><option>draft</option><option>sent</option><option>paid</option><option>overdue</option></select></div>
+    <select id="st" aria-label="Filter by status" class="auto"><option value="">All</option><option>draft</option><option>sent</option><option>paid</option><option>overdue</option></select></div>
     <div id="list"></div>`;
   const paint = () => {
     const q = $('#q').value.toLowerCase(), f = $('#st').value;
@@ -51,7 +51,7 @@ function edit(id) {
     <label>Issue date<input type="date" name="issued" required></label><label>Due date<input type="date" name="due" required></label></div>
     <h3>Client</h3><label>Name<input name="c.name" required></label><label>Email<input type="email" name="c.email"></label><label>Address<textarea name="c.address" rows="2"></textarea></label>
     <h3>Items</h3><div id="items"></div><button type="button" id="add">Add item</button>
-    <div class="grid" style="margin-top:14px"><label>Tax %<input type="number" name="tax" min="0" max="100" step="any"></label><label>Discount amount<input type="number" name="discount" min="0" step="any"></label>
+    <div class="grid mt"><label>Tax %<input type="number" name="tax" min="0" max="100" step="any"></label><label>Discount amount<input type="number" name="discount" min="0" step="any"></label>
     <label>Status<select name="status"><option value="draft">Draft</option><option value="sent">Sent</option><option value="paid">Paid</option></select></label></div>
     <label>Notes<textarea name="notes" rows="2" placeholder="Payment details or a thank-you note"></textarea></label>
     <div class="actions"><button class="primary" type="submit">Save invoice</button><button type="button" id="print">Print or save as PDF</button>
@@ -103,7 +103,7 @@ function profile() {
     <div class="grid"><label>Currency<select name="currency">${opts(p.currency)}</select></label><label>Default tax %<input name="tax" type="number" min="0" max="100" step="any" value="${+p.tax || 0}"></label><label>Number prefix<input name="prefix" maxlength="8" value="${esc(p.prefix)}"></label></div>
     <div class="actions"><button class="primary" type="submit">Save profile</button></div></form>
     <div class="card"><h2>Backup</h2><p class="mut">Your data stays in this browser only. Export a copy to keep it safe or move it to another device.</p>
-    <div class="actions"><button id="exp">Export backup</button><label class="btn" style="margin:0">Import backup<input id="imp" type="file" accept="application/json" hidden></label><button id="rst" class="danger">Erase all data</button></div></div>`;
+    <div class="actions"><button id="exp">Export backup</button><label class="btn nm">Import backup<input id="imp" type="file" accept="application/json" hidden></label><button id="rst" class="danger">Erase all data</button></div></div>`;
   $('#f').onsubmit = e => {
     e.preventDefault(); const d = new FormData(e.target);
     db.profile = { name: d.get('name'), email: d.get('email'), address: d.get('address'), currency: d.get('currency'), tax: parseFloat(d.get('tax')) || 0, prefix: d.get('prefix') };

@@ -1,11 +1,18 @@
-/* JSON backup: export a file, import with structure validation. */
+/* JSON backup: export a file, import with structure validation. Imported ids are made unique. */
 (function (root) {
   'use strict';
+  function makeId() {
+    var s = root.BillFlowStorage;
+    return s && s.newId ? s.newId() : Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
   function validate(v) {
     if (!v || typeof v !== 'object' || !Array.isArray(v.invoices)) throw new Error('invalid backup');
+    var seen = {};
     v.invoices.forEach(function (i) {
       if (!i || typeof i !== 'object' || !Array.isArray(i.items) || !i.client || typeof i.client !== 'object') throw new Error('invalid invoice');
-      i.id = String(i.id || '').replace(/[^a-z0-9]/gi, '') || Math.random().toString(36).slice(2, 10);
+      var id = String(i.id || '').replace(/[^a-z0-9-]/gi, '');
+      i.id = (!id || seen[id]) ? makeId() : id;
+      seen[i.id] = true;
       i.no = String(i.no || ''); i.cur = String(i.cur || 'USD');
       i.issued = String(i.issued || ''); i.due = String(i.due || '');
       i.tax = +i.tax || 0; i.discount = +i.discount || 0; i.notes = String(i.notes || '');
@@ -28,5 +35,6 @@
     a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' }));
     a.download = name; a.click(); URL.revokeObjectURL(a.href);
   }
-  root.BillFlowBackup = { validate: validate, read: read, download: download };
-})(window);
+  var api = { validate: validate, read: read, download: download };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.BillFlowBackup = api;
+})(typeof window !== 'undefined' ? window : globalThis);

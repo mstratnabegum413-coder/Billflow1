@@ -2,8 +2,10 @@
 (function (root) {
   'use strict';
   function round(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+  /** Amount of one line item, rounded to cents. All amount arithmetic in the app goes through this file. */
+  function lineTotal(item) { return round((+item.q || 0) * (+item.p || 0)); }
   function calc(inv) {
-    var sub = round(inv.items.reduce(function (s, x) { return s + (+x.q || 0) * (+x.p || 0); }, 0));
+    var sub = round(inv.items.reduce(function (s, x) { return s + lineTotal(x); }, 0));
     var disc = round(Math.min(+inv.discount || 0, sub));
     var tax = round((sub - disc) * (+inv.tax || 0) / 100);
     return { sub: sub, disc: disc, tax: tax, total: round(sub - disc + tax) };
@@ -27,6 +29,11 @@
     });
     return { paid: round(out.paid), outstanding: round(out.outstanding), overdue: round(out.overdue) };
   }
-  var api = { round: round, calc: calc, status: status, nextInvoiceNumber: nextInvoiceNumber, summarise: summarise };
+  /** Removes exactly one invoice by id. A missing id removes nothing, never everything. */
+  function removeInvoice(invoices, id) {
+    if (!id) return invoices;
+    return invoices.filter(function (i) { return i.id !== id; });
+  }
+  var api = { round: round, lineTotal: lineTotal, removeInvoice: removeInvoice, calc: calc, status: status, nextInvoiceNumber: nextInvoiceNumber, summarise: summarise };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.BillFlowCalc = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -10,7 +10,7 @@
         <td>${ui.esc(x.d) || '-'}</td>
         <td>${x.q}</td>
         <td>${ui.money(x.p, inv.cur)}</td>
-        <td>${ui.money(x.q * x.p, inv.cur)}</td>
+        <td>${ui.money(calc.lineTotal(x), inv.cur)}</td>
       </tr>`;
     }).join('');
   }

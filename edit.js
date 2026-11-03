@@ -102,7 +102,7 @@
       };
       ui.$('#del').onclick = function () {
         if (!inv.id || !confirm(cfg.MESSAGES.confirmDelete)) return;
-        db.invoices = db.invoices.filter(function (i) { return i.id !== inv.id; });
+        db.invoices = calc.removeInvoice(db.invoices, inv.id);
         state.save(); ui.toast(cfg.MESSAGES.invoiceDeleted); location.hash = '';
       };
     }

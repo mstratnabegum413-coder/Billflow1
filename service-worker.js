@@ -1,6 +1,6 @@
 /* Precaches the full app shell and serves it offline. ASSETS must list every shipped file.
    Bump CACHE whenever any listed file changes so visitors do not get stale copies. */
-const CACHE = 'billflow-v3';
+const CACHE = 'billflow-v4';
 const ASSETS = [
   './', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icon.svg',
   'config.js', 'invoice-calc.js', 'storage.js', 'backup.js', 'sample-data.js',

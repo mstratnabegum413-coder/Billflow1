@@ -23,7 +23,7 @@
       </form>
       <div class="card">
         <h2>Backup</h2>
-        <p class="mut">Your data stays in this browser only and is not protected by a password. Export a copy to keep it safe or move it to another device.</p>
+        <p class="mut">Your data is stored unencrypted in this browser only and is not protected by a password, so do not use BillFlow for sensitive client data on shared devices. Export a copy to keep it safe or move it to another device.</p>
         <div class="actions">
           <button id="exp">Export backup</button>
           <label class="btn nm">Import backup<input id="imp" type="file" accept="application/json" hidden></label>

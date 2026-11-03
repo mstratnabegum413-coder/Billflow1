@@ -6,6 +6,7 @@
   var cfg = root.BillFlowConfig;
   var state = root.BillFlowState;
   var storage = root.BillFlowStorage;
+  var items = root.BillFlowEditItems;
   root.BillFlowViews = root.BillFlowViews || {};
 
   function blankInvoice(db) {
@@ -48,17 +49,6 @@
       <div id="sheet" class="sheet"></div>`;
   }
 
-  function itemRows(inv) {
-    return inv.items.map(function (x, k) {
-      return `<div class="item">
-          <input data-k="${k}" data-f="d" value="${ui.esc(x.d)}" placeholder="Description" aria-label="Description">
-          <input data-k="${k}" data-f="q" type="number" min="0" step="any" value="${x.q}" aria-label="Quantity">
-          <input data-k="${k}" data-f="p" type="number" min="0" step="any" value="${x.p}" aria-label="Unit price">
-          <button type="button" class="x" data-rm="${k}" aria-label="Remove item">&times;</button>
-        </div>`;
-    }).join('');
-  }
-
   root.BillFlowViews.edit = function (id) {
     var db = state.db;
     var found = id ? db.invoices.find(function (i) { return i.id === id; }) : null;
@@ -68,25 +58,16 @@
     var form = ui.$('#f');
     function get(name) { return name.indexOf('c.') === 0 ? inv.client[name.slice(2)] : inv[name]; }
     function set(name, value) { if (name.indexOf('c.') === 0) inv.client[name.slice(2)] = value; else inv[name] = value; }
-    function rows() { ui.$('#items').innerHTML = itemRows(inv); }
     function paint() { ui.$('#sheet').innerHTML = root.BillFlowSheet.html(inv, db.profile); }
 
     ui.$$('[name]', form).forEach(function (el) { var v = get(el.name); el.value = v == null ? '' : v; });
     form.addEventListener('input', function (e) {
       var el = e.target;
-      if (el.dataset.f) {
-        var item = inv.items[+el.dataset.k];
-        item[el.dataset.f] = el.dataset.f === 'd' ? el.value : (parseFloat(el.value) || 0);
-      } else if (el.name) {
-        set(el.name, el.type === 'number' ? (parseFloat(el.value) || 0) : el.value);
-      }
+      if (!items.onInput(inv, el) && el.name) set(el.name, el.type === 'number' ? (parseFloat(el.value) || 0) : el.value);
       paint();
     });
-    form.addEventListener('click', function (e) {
-      var k = e.target.dataset.rm;
-      if (k !== undefined) { if (inv.items.length > 1) inv.items.splice(+k, 1); rows(); paint(); }
-    });
-    ui.$('#add').onclick = function () { inv.items.push({ d: '', q: 1, p: 0 }); rows(); paint(); };
+    form.addEventListener('click', function (e) { if (items.onRemove(inv, e.target)) paint(); });
+    ui.$('#add').onclick = function () { calc.addItem(inv); items.render(inv); paint(); };
     ui.$('#print').onclick = root.BillFlowSheet.print;
     form.onsubmit = function (e) {
       e.preventDefault();
@@ -106,6 +87,6 @@
         state.save(); ui.toast(cfg.MESSAGES.invoiceDeleted); location.hash = '';
       };
     }
-    rows(); paint();
+    items.render(inv); paint();
   };
 })(window);

@@ -7,23 +7,37 @@
   var storage = root.BillFlowStorage;
   root.BillFlowViews = root.BillFlowViews || {};
 
+  // Field descriptors: the profile form is rendered from these two lists.
+  var FIELDS = [
+    { name: 'name', label: 'Business name', type: 'text' },
+    { name: 'email', label: 'Email', type: 'email' },
+    { name: 'address', label: 'Address', type: 'textarea' }
+  ];
+  var GRID_FIELDS = [
+    { name: 'currency', label: 'Currency', type: 'currency' },
+    { name: 'tax', label: 'Default tax %', type: 'number', attrs: 'min="0" max="100" step="any"' },
+    { name: 'prefix', label: 'Number prefix', type: 'text', attrs: 'maxlength="8"' }
+  ];
+
+  function fieldHtml(f, profile) {
+    var value = profile[f.name];
+    if (f.type === 'currency') return `<label>${f.label}<select name="${f.name}">${ui.currencyOptions(value)}</select></label>`;
+    if (f.type === 'textarea') return `<label>${f.label}<textarea name="${f.name}" rows="2">${ui.esc(value)}</textarea></label>`;
+    var shown = f.type === 'number' ? (+value || 0) : value;
+    return `<label>${f.label}<input name="${f.name}" type="${f.type}" ${f.attrs || ''} value="${ui.esc(shown)}"></label>`;
+  }
+
   root.BillFlowViews.profile = function () {
     var p = state.db.profile;
     ui.$('#app').innerHTML = `<form id="f" class="card">
         <h2>Business profile</h2>
-        <label>Business name<input name="name" value="${ui.esc(p.name)}"></label>
-        <label>Email<input name="email" type="email" value="${ui.esc(p.email)}"></label>
-        <label>Address<textarea name="address" rows="2">${ui.esc(p.address)}</textarea></label>
-        <div class="grid">
-          <label>Currency<select name="currency">${ui.currencyOptions(p.currency)}</select></label>
-          <label>Default tax %<input name="tax" type="number" min="0" max="100" step="any" value="${+p.tax || 0}"></label>
-          <label>Number prefix<input name="prefix" maxlength="8" value="${ui.esc(p.prefix)}"></label>
-        </div>
+        ${FIELDS.map(function (f) { return fieldHtml(f, p); }).join('')}
+        <div class="grid">${GRID_FIELDS.map(function (f) { return fieldHtml(f, p); }).join('')}</div>
         <div class="actions"><button class="primary" type="submit">Save profile</button></div>
       </form>
       <div class="card">
         <h2>Backup</h2>
-        <p class="mut">Your data is stored unencrypted in this browser only and is not protected by a password, so do not use BillFlow for sensitive client data on shared devices. Export a copy to keep it safe or move it to another device.</p>
+        <p class="mut">${cfg.MESSAGES.dataWarning}</p>
         <div class="actions">
           <button id="exp">Export backup</button>
           <label class="btn nm">Import backup<input id="imp" type="file" accept="application/json" hidden></label>

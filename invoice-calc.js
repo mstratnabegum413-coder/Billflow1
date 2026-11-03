@@ -34,6 +34,15 @@
     if (!id) return invoices;
     return invoices.filter(function (i) { return i.id !== id; });
   }
-  var api = { round: round, lineTotal: lineTotal, removeInvoice: removeInvoice, calc: calc, status: status, nextInvoiceNumber: nextInvoiceNumber, summarise: summarise };
+  /** Line items: pure helpers so the editor view only has to render. */
+  function addItem(inv) { inv.items.push({ d: '', q: 1, p: 0 }); return inv; }
+  function removeItem(inv, k) { if (inv.items.length > 1 && k >= 0 && k < inv.items.length) inv.items.splice(k, 1); return inv; }
+  function setItemField(inv, k, field, raw) {
+    var item = inv.items[k];
+    if (!item || ['d', 'q', 'p'].indexOf(field) < 0) return inv;
+    item[field] = field === 'd' ? String(raw) : (parseFloat(raw) || 0);
+    return inv;
+  }
+  var api = { addItem: addItem, removeItem: removeItem, setItemField: setItemField, round: round, lineTotal: lineTotal, removeInvoice: removeInvoice, calc: calc, status: status, nextInvoiceNumber: nextInvoiceNumber, summarise: summarise };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.BillFlowCalc = api;
 })(typeof window !== 'undefined' ? window : globalThis);

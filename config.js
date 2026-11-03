@@ -16,6 +16,7 @@
       profileSaved: 'Profile saved',
       sampleLoaded: 'Sample data loaded',
       imported: 'Backup imported',
+      dataWarning: 'Your data is stored unencrypted in this browser only and is not protected by a password, so do not use BillFlow for sensitive client data on shared devices. Export a copy to keep it safe or move it to another device.',
       badBackup: 'That file is not a BillFlow backup',
       erased: 'All data erased',
       confirmDelete: 'Delete this invoice? This cannot be undone.',

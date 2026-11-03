@@ -1,0 +1,1 @@
+Upload the contents of this extracted archive to the GitHub repository root. index.html is already at root; do not create a Web App folder. Enable Pages at Settings > Pages > Deploy from a branch > main > /(root).
